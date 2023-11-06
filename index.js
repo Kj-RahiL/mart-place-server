@@ -36,6 +36,20 @@ async function run() {
         res.send(result)
     })
 
+    app.get('/jobs', async(req,res)=>{
+        const cursor = jobCollection.find()
+        const result = await cursor.toArray()
+        res.send(result)
+    })
+
+    app.get('/jobs/:category', async(req,res)=>{
+        const category = req.params.category
+        // console.log('hello', category)
+        const query = { category: category };
+        const cursor = jobCollection.find(query);
+        const result = await cursor.toArray()
+        res.send(result)
+    })
 
 
 

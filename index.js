@@ -29,19 +29,22 @@ const client = new MongoClient(uri, {
 
 // middlewares
 const logger = async(req,res,next)=>{
-  console.log('called', req.host, req.originalUrl)
+  console.log('called log', req.method, req.url)
   next()
 }
 
 const verifyToken = async(req,res,next)=>{
   const token = req.cookies?.token
+  // console.log('token in middleware', token)
   if(!token){
     return res.status(401).send({message: 'unAuthorized access'})
   }
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
     if(err){
+      console.log(err)
       return res.status(401).send({message: 'unAuthorized access'})
     }
+    console.log('value in the token', decoded)
     req.user = decoded
     next()
   })
@@ -56,10 +59,10 @@ async function run() {
     const bidCollection = client.db('JobDB').collection('myBids')
 
     // auth related api
-    app.post ('/jwt',logger, verifyToken, async(req,res)=>{
+    app.post ('/jwt', async(req,res)=>{
       const user =req.body
       console.log(user)
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '5h'})
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
       res
       .cookie('token', token,{
         httpOnly: true,
@@ -67,6 +70,12 @@ async function run() {
 
       })
       .send({success: true})
+    })
+
+    app.post('/logout', async(req,res)=>{
+      const user = req.body
+      console.log('logging out', user)
+      res.clearCookie('token', {maxAge: 0}).send({success:true})
     })
 
     // add jobs
@@ -152,18 +161,27 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/myBid',logger, verifyToken, async (req, res) => {
-      console.log(req.query.userEmail)
-     if(req.query.email !== req.user.email){
-      return res.status(403).send({message: "forbidden access"})
-     }
+    app.get('/myBid',logger,verifyToken,   async (req, res) => {
+   
+      // console.log('tik tok token', req.cookies.token)
+      // console.log(req.query.userEmail)
+      // console.log('req user', req.user)
+
+    //  if(req.query.userEmail !== req.user.email){
+    //   return res.status(403).send({message: "forbidden access"})
+    //  }
+
       let query = {}
       if (req?.query?.userEmail) {
         query = { userEmail: req.query.userEmail }
       }
+      if (req?.query?.buyerEmail) {
+        query = { buyerEmail: req.query.buyerEmail }
+      }
       const result = await bidCollection.find(query).toArray()
       res.send(result)
     })
+
 
     app.patch('/myBid/:id', async(req,res)=>{
       const id = req.params.id

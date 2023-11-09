@@ -10,7 +10,12 @@ const port = process.env.port || 5000
 
 // middleware
 app.use(cors({
-  origin: ['http://localhost:5173'],
+  origin: [
+    'http://localhost:5173',
+    'https://mart-place-1d735.web.app',
+    'https://mart-place-1d735.firebaseapp.com',
+   
+  ],
   credentials:true
 }))
 app.use(express.json())
@@ -35,7 +40,7 @@ const logger = async(req,res,next)=>{
 
 const verifyToken = async(req,res,next)=>{
   const token = req.cookies?.token
-  // console.log('token in middleware', token)
+  console.log('token in middleware', token)
   if(!token){
     return res.status(401).send({message: 'unAuthorized access'})
   }
@@ -53,7 +58,7 @@ const verifyToken = async(req,res,next)=>{
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const jobCollection = client.db('JobDB').collection('jobs')
     const bidCollection = client.db('JobDB').collection('myBids')
@@ -64,12 +69,20 @@ async function run() {
       console.log(user)
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
       res
-      .cookie('token', token,{
-        httpOnly: true,
-        secure:false,
+      // .cookie('token', token,{
+      //   httpOnly: true,
+      //   secure:false,
+      //   sameSite: 'none'
 
-      })
-      .send({success: true})
+      // })
+      // .send({success: true})
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', 
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+
+    }).send({success: true})
     })
 
     app.post('/logout', async(req,res)=>{
@@ -161,11 +174,11 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/myBid',logger,verifyToken,   async (req, res) => {
+    app.get('/myBid',logger, verifyToken, async (req, res) => {
    
-      // console.log('tik tok token', req.cookies.token)
-      // console.log(req.query.userEmail)
-      // console.log('req user', req.user)
+      console.log('tik tok token', req.cookies.token)
+      console.log('..hellooo.', req.query.userEmail)
+      console.log('req user', req.user)
 
     //  if(req.query.userEmail !== req.user.email){
     //   return res.status(403).send({message: "forbidden access"})
@@ -199,7 +212,7 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error

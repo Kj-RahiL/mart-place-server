@@ -68,7 +68,7 @@ async function run() {
       const user =req.body
       console.log(user)
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
-      res
+
       // .cookie('token', token,{
       //   httpOnly: true,
       //   secure:false,
@@ -191,7 +191,7 @@ async function run() {
       if (req?.query?.buyerEmail) {
         query = { buyerEmail: req.query.buyerEmail }
       }
-      const result = await bidCollection.find(query).toArray()
+      const result = await bidCollection.find(query).sort({ status: 1 }).toArray()
       res.send(result)
     })
 

@@ -12,9 +12,10 @@ const port = process.env.port || 5000
 app.use(cors({
   origin: [
     'http://localhost:5173',
+    'http://localhost:5174',
     'https://mart-place-1d735.web.app',
     'https://mart-place-1d735.firebaseapp.com',
-   
+    'https://martplace-kj.netlify.app'
   ],
   credentials:true
 }))
